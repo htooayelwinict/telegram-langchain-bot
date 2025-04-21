@@ -1,0 +1,57 @@
+graph TB
+    subgraph "User Layer"
+        User["User"]
+        TelegramBot["Telegram Bot"]
+    end
+
+    subgraph "Application Layer"
+        Handlers["Bot Handlers"]
+        RateLimiter["Rate Limiter"]
+        ChatHistory["Chat History Manager"]
+        Langchain["Langchain Manager"]
+        RAG["RAG Retriever"]
+        VectorStore["Vector Store Manager"]
+        PromptMgmt["Prompt Management System"]
+    end
+
+    subgraph "External Services"
+        LLM["OpenAI LLM"]
+    end
+
+    subgraph "Database Layer"
+        SQLDb["PostgreSQL DB"]
+        ChromaDB["ChromaDB\nVector Database"]
+        Redis["Redis"]
+    end
+
+    %% Core Connections
+    User <--> TelegramBot
+    TelegramBot <--> Handlers
+    Handlers --> RateLimiter
+    Handlers <--> ChatHistory
+    Handlers <--> Langchain
+    Langchain <--> RAG
+    RAG <--> VectorStore
+    Langchain <--> LLM
+    Handlers <--> PromptMgmt
+    
+    %% Database Connections
+    ChatHistory <--> SQLDb
+    VectorStore <--> ChromaDB
+    RateLimiter <--> Redis
+    
+    %% Enhanced Connections
+    ChatHistory -->|"Direct\nVectorization"| VectorStore
+    RateLimiter -.->|"Advanced\nRate Limiting\n(Optional)"| ChatHistory
+
+    %% Style Definitions
+    classDef userLayer fill:#B3E5FC,stroke:#0288D1,color:#01579B
+    classDef appLayer fill:#E1BEE7,stroke:#8E24AA,color:#4A148C
+    classDef dbLayer fill:#FFE0B2,stroke:#FB8C00,color:#E65100
+    classDef externalLayer fill:#C8E6C9,stroke:#43A047,color:#1B5E20
+    classDef enhancedFlow fill:#FF5733,stroke:#FF5733,color:#000
+
+    class User,TelegramBot userLayer
+    class Handlers,RateLimiter,ChatHistory,Langchain,RAG,VectorStore,PromptMgmt appLayer
+    class SQLDb,ChromaDB,Redis dbLayer
+    class LLM externalLayer

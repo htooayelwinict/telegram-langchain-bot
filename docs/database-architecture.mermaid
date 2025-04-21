@@ -1,0 +1,76 @@
+flowchart TD
+    subgraph "PostgreSQL"
+        PSQL[(PostgreSQL DB)]
+        UsersTbl["Users Table
+        - id
+        - telegram_id
+        - username
+        - first_name
+        - last_name
+        - created_at
+        - updated_at"]
+        MsgTbl["Messages Table
+        - id
+        - user_id
+        - role
+        - content
+        - created_at"]
+        SQLAlc["SQLAlchemy ORM
+        with AsyncSession"]
+    end
+    
+    subgraph "ChromaDB"
+        Chroma[(ChromaDB Vector Store)]
+        Collection["Collection: chat_history"]
+        Embed["OpenAI Embeddings
+        text-embedding-3-large"]
+        PersistDir["Persistent Storage
+        ./data/vector_store"]
+    end
+    
+    subgraph "Redis"
+        RedisDB[(Redis DB)]
+        RateLimits["Rate Limiting
+        Sorted Sets by User ID"]
+    end
+    
+    subgraph "Manager Components"
+        ChatMgr["Chat History Manager
+        app/db/chat_history.py"]
+        VectorMgr["Vector Store Manager
+        app/db/vector_store.py"]
+        RateLim["Rate Limiter
+        app/utils/rate_limiter.py"]
+    end
+    
+    %% Database relationships
+    UsersTbl -->|references| MsgTbl
+    
+    %% Standard connections
+    PSQL --- UsersTbl & MsgTbl
+    UsersTbl & MsgTbl --- SQLAlc
+    SQLAlc --- ChatMgr
+    
+    Chroma --- Collection
+    Embed --- Chroma
+    Chroma --- PersistDir
+    Chroma --- VectorMgr
+    
+    RedisDB --- RateLimits
+    RateLimits --- RateLim
+    
+    %% Enhanced Data Flow Connections
+    ChatMgr -->|"Direct Vectorization"| VectorMgr
+    RateLim -.->|"Advanced Rate Limiting (Optional)"| ChatMgr
+    
+    %% Styles
+    classDef postgres fill:#336791,stroke:#fff,color:#fff
+    classDef chromadb fill:#00A36C,stroke:#fff,color:#fff
+    classDef redis fill:#DC382D,stroke:#fff,color:#fff
+    classDef manager fill:#3498DB,stroke:#fff,color:#fff
+    classDef newFlow fill:#FF5733,stroke:#FF5733,color:#fff
+    
+    class PSQL,UsersTbl,MsgTbl,SQLAlc postgres
+    class Chroma,Collection,Embed,PersistDir chromadb
+    class RedisDB,RateLimits redis
+    class ChatMgr,VectorMgr,RateLim manager

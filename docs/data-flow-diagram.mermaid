@@ -1,0 +1,79 @@
+sequenceDiagram
+    participant User
+    participant TelegramBot as Telegram Bot
+    participant Handlers as Bot Handlers
+    participant RateLimiter as Rate Limiter
+    participant ChatHistory as Chat History Manager
+    participant VectorStore as Vector Store Manager
+    participant Langchain as Langchain Manager
+    participant RAG as RAG Retriever
+    participant LLM as OpenAI LLM
+    participant SQLDb as PostgreSQL DB
+    participant ChromaDB as ChromaDB
+    participant Redis as Redis
+    
+    User->>TelegramBot: 1. Send message
+    TelegramBot->>Handlers: 2. Process update
+    
+    %% Rate Limiting Flow
+    Handlers->>RateLimiter: 3. Check rate limit
+    
+    alt Advanced Rate Limiting Enabled
+        RateLimiter->>ChatHistory: 4a. Get user chat statistics
+        ChatHistory->>SQLDb: 4b. Query message history
+        ChatHistory-->>RateLimiter: 4c. Chat statistics
+        RateLimiter->>Redis: 4d. Apply adjusted limits
+    else Basic Rate Limiting
+        RateLimiter->>Redis: 4. Check standard limits
+    end
+    
+    Redis-->>RateLimiter: 5. Current usage
+    RateLimiter-->>Handlers: 6. Allow/Deny
+    
+    alt Rate limit exceeded
+        Handlers-->>TelegramBot: 7a. Rate limit message
+        TelegramBot-->>User: 8a. "Rate limit exceeded"
+    else Rate limit ok
+        %% Message Storage Flow
+        Handlers->>ChatHistory: 7b. Save user message
+        ChatHistory->>SQLDb: 8b. Store message
+        
+        %% Direct Vectorization
+        ChatHistory->>VectorStore: 9. Vectorize user message
+        VectorStore->>ChromaDB: 10. Store vector embedding
+        
+        %% Message Processing Flow
+        Handlers->>Langchain: 11. Process message
+        Langchain->>ChatHistory: 12. Get chat history
+        ChatHistory->>SQLDb: 13. Query history
+        ChatHistory-->>Langchain: 14. Recent messages
+        
+        %% RAG Flow
+        Langchain->>RAG: 15. Get relevant context
+        RAG->>VectorStore: 16. Search similar content
+        VectorStore->>ChromaDB: 17. Query vector database
+        ChromaDB-->>VectorStore: 18. Similar vectors
+        VectorStore-->>RAG: 19. Relevant documents
+        RAG-->>Langchain: 20. Formatted context
+        
+        %% Response Generation
+        Langchain->>Langchain: 21. Load prompt templates
+        Langchain->>Langchain: 22. Format prompt with context
+        
+        Langchain->>LLM: 23. Generate response
+        LLM-->>Langchain: 24. AI response
+        
+        Langchain-->>Handlers: 25. Final response
+        
+        %% Response Storage & Vectorization
+        Handlers->>ChatHistory: 26. Save assistant response
+        ChatHistory->>SQLDb: 27. Store response
+        
+        %% Direct Vectorization of Response
+        ChatHistory->>VectorStore: 28. Vectorize assistant response
+        VectorStore->>ChromaDB: 29. Store vector embedding
+        
+        %% User Response
+        Handlers-->>TelegramBot: 30. Response message
+        TelegramBot-->>User: 31. Display response
+    end
