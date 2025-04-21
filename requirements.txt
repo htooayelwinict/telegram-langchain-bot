@@ -1,0 +1,32 @@
+# Core dependencies
+python-telegram-bot[webhooks]==20.5
+python-dotenv==1.0.0
+langchain==0.0.267
+openai==0.27.8
+
+# Database dependencies
+sqlalchemy==2.0.20
+alembic==1.12.0
+asyncpg==0.28.0
+psycopg2-binary==2.9.7
+
+# Vector store dependencies
+chromadb==0.4.13
+pydantic==1.10.8
+tiktoken==0.5.2
+
+# Redis dependencies
+redis==4.6.0
+
+# Async dependencies
+asyncio==3.4.3
+aiohttp==3.8.5
+
+# Utility dependencies
+python-json-logger==2.0.7
+tenacity==8.2.3
+
+# Testing dependencies
+pytest==7.4.0
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0

@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Telegram Bot Application
+  app:
+    build: .
+    container_name: telegram-bot
+    restart: unless-stopped
+    volumes:
+      - ./app:/app/app
+      - ./data:/app/data
+    ports:
+      - "8443:8443"
+    environment:
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/telegram_bot
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMA_PERSIST_DIRECTORY=/app/data/vector_store
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - PORT=8443
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL}
+    depends_on:
+      - postgres
+      - redis
+      - chroma
+    command: python -m app.main
+  
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14-alpine
+    container_name: telegram-bot-postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=telegram_bot
+    ports:
+      - "5432:5432"
+  
+  # Redis for Rate Limiting
+  redis:
+    image: redis:7-alpine
+    container_name: telegram-bot-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+  
+  # ChromaDB for Vector Storage
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: telegram-bot-chroma
+    restart: unless-stopped
+    volumes:
+      - ./data/vector_store:/chroma/chroma
+    environment:
+      - CHROMA_DB_IMPL=duckdb+parquet
+      - PERSIST_DIRECTORY=/chroma/chroma
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
+  redis_data:
