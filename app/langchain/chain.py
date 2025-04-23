@@ -110,7 +110,7 @@ class LangchainManager:
                 try:
                     chat_history = await self.chat_history_manager.get_conversation_history(
                         user_id=user_id,
-                        limit=10,
+                        limit=50,
                         include_system=False
                     )
                 except Exception as chat_error:
@@ -219,7 +219,7 @@ class LangchainManager:
             if chat_history is None and self.chat_history_manager:
                 chat_history = await self.chat_history_manager.get_conversation_history(
                     user_id=user_id,
-                    limit=10,
+                    limit=50,
                     include_system=False
                 )
             

@@ -196,7 +196,7 @@ class ChatHistoryManager:
     async def get_recent_history(
         self,
         user_id: str,
-        limit: int = 10,
+        limit: int = 50,
         hours: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
@@ -245,7 +245,7 @@ class ChatHistoryManager:
                         "message_metadata": message.message_metadata
                     })
                 
-                logger.info(f"Retrieved {len(history)} recent messages for user {user_id}")
+                logger.info(f"Retrieved {len(history)} recent messages (requested limit: {limit}) for user {user_id}")
                 return history
         except Exception as e:
             logger.error(f"Error getting recent history for user {user_id}: {e}")
