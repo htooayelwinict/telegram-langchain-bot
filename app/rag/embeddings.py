@@ -31,7 +31,10 @@ class EnhancedOpenAIEmbeddings(OpenAIEmbeddings):
         
         # Explicitly set tiktoken_model for text-embedding-3 models
         if model.startswith("text-embedding-3"):
-            kwargs["tiktoken_model"] = "cl100k_base"
+            # Use model_kwargs instead of direct tiktoken_model parameter
+            if "model_kwargs" not in kwargs:
+                kwargs["model_kwargs"] = {}
+            kwargs["model_kwargs"]["tiktoken_model"] = "cl100k_base"
         
         super().__init__(
             model=model,
