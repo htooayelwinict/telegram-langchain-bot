@@ -181,12 +181,27 @@ class TelegramBot:
             # Start the application with webhook
             await application.initialize()
             await application.start()
-            await application.updater.start_webhook(
-                listen="0.0.0.0",
-                port=port,
-                url_path=webhook_path,
-                webhook_url=webhook_url
-            )
+            
+            # Get webhook secret if available
+            webhook_secret = config.WEBHOOK_SECRET
+            
+            # Configure webhook parameters
+            webhook_params = {
+                "listen": "0.0.0.0",
+                "port": port,
+                "url_path": webhook_path,
+                "webhook_url": webhook_url
+            }
+            
+            # Add secret token if available
+            if webhook_secret:
+                logger.info("Using webhook secret for enhanced security")
+                webhook_params["secret_token"] = webhook_secret
+            else:
+                logger.warning("No webhook secret provided. It is recommended to set WEBHOOK_SECRET for enhanced security.")
+            
+            # Start webhook with parameters
+            await application.updater.start_webhook(**webhook_params)
             
             # Wait for shutdown event
             await self.shutdown_event.wait()

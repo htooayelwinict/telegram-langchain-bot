@@ -8,7 +8,8 @@ services:
     restart: unless-stopped
     volumes:
       - ./app:/app/app
-      - ./data:/app/data
+      - ./persistent_data/app:/app/data
+      - ./scripts:/app/scripts
     ports:
       - "8443:8443"
     environment:
@@ -18,13 +19,14 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CHROMA_PERSIST_DIRECTORY=/app/data/vector_store
       - WEBHOOK_URL=${WEBHOOK_URL}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
       - PORT=8443
       - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL}
     depends_on:
       - postgres
       - redis
       - chroma
-    command: python -m app.main
+      - ngrok
   
   # PostgreSQL Database
   postgres:
@@ -32,7 +34,7 @@ services:
     container_name: telegram-bot-postgres
     restart: unless-stopped
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./persistent_data/postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -46,23 +48,32 @@ services:
     container_name: telegram-bot-redis
     restart: unless-stopped
     volumes:
-      - redis_data:/data
+      - ./persistent_data/redis:/data
     ports:
       - "6379:6379"
   
+  # Ngrok Service for local development
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    restart: unless-stopped
+    ports:
+      - "4040:4040"
+    command: http app:8443 --log=stdout
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+
   # ChromaDB for Vector Storage
   chroma:
     image: ghcr.io/chroma-core/chroma:latest
     container_name: telegram-bot-chroma
     restart: unless-stopped
     volumes:
-      - ./data/vector_store:/chroma/chroma
+      - ./persistent_data/chroma:/chroma/chroma
     environment:
       - CHROMA_DB_IMPL=duckdb+parquet
       - PERSIST_DIRECTORY=/chroma/chroma
     ports:
       - "8000:8000"
 
-volumes:
-  postgres_data:
-  redis_data:
+# No named volumes needed as we're using bind mounts

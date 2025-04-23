@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
@@ -27,5 +28,8 @@ ENV PYTHONUNBUFFERED=1
 # Expose port
 EXPOSE 8080
 
-# Run the application
-CMD ["python", "-m", "app.main"]
+# Make entrypoint script executable
+RUN chmod +x /app/scripts/entrypoint.sh
+
+# Run the entrypoint script
+CMD ["sh", "/app/scripts/entrypoint.sh"]
